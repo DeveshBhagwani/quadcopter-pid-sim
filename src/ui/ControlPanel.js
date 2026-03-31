@@ -34,6 +34,8 @@ export class ControlPanel {
 
         const envFolder = this.gui.addFolder('Environment & Physics');
         envFolder.add(this.sim.physics, 'mass', 0.5, 3.0, 0.1).name('Drone Mass (kg)');
+        envFolder.add(this.sim, 'sensorNoise', 0, 1.0, 0.01).name('Sensor Noise Lvl');
+        envFolder.add(this.sim.estimator, 'alpha', 0.01, 1.0, 0.01).name('Filter Alpha');
         
         const actions = {
             triggerGust: () => {

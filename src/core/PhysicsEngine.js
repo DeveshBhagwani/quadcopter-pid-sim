@@ -16,6 +16,22 @@ export class PhysicsEngine {
         this.netTorque = { x: 0, y: 0, z: 0 };
     }
 
+    gaussianNoise(stdDev) {
+        const u1 = Math.max(0.0001, Math.random());
+        const u2 = Math.random();
+        const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+        return z0 * stdDev;
+    }
+
+    readSensors(noiseLevel) {
+        return {
+            z: this.position.z + this.gaussianNoise(noiseLevel),
+            roll: this.rotation.x + this.gaussianNoise(noiseLevel * 0.1),
+            pitch: this.rotation.y + this.gaussianNoise(noiseLevel * 0.1),
+            yaw: this.rotation.z + this.gaussianNoise(noiseLevel * 0.1)
+        };
+    }
+
     applyMotorForces(m1, m2, m3, m4) {
         const totalThrust = m1 + m2 + m3 + m4;
 

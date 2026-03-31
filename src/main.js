@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PhysicsEngine } from './core/PhysicsEngine.js';
+import { StateEstimator } from './core/StateEstimator.js';
 import { Drone } from './components/Drone.js';
 import { PIDController } from './core/PIDController.js';
 import { Mixer } from './core/Mixer.js';
@@ -36,6 +37,8 @@ class Simulator {
         this.controls.dampingFactor = 0.05;
 
         this.physics = new PhysicsEngine();
+        this.estimator = new StateEstimator(0.2);
+        this.sensorNoise = 0.0;
         
         this.drone = new Drone();
         this.scene.add(this.drone.mesh);
@@ -44,7 +47,6 @@ class Simulator {
         this.scene.add(this.ghostDrone.mesh);
 
         this.mixer = new Mixer(0, 10);
-        
         this.thrustVectors = new ThrustVectors(this.drone.mesh, this.mixer.maxThrust);
 
         this.targets = { z: 5.0, roll: 0, pitch: 0, yaw: 0 };
@@ -98,16 +100,19 @@ class Simulator {
         this.elapsedTime += dt;
 
         this.autoTuner.update(dt);
+        this.physics.update(dt);
 
-        const thrustCmd = this.pid.alt.update(this.targets.z, this.physics.position.z, dt);
-        const rollCmd = this.pid.roll.update(this.targets.roll, this.physics.rotation.x, dt);
-        const pitchCmd = this.pid.pitch.update(this.targets.pitch, this.physics.rotation.y, dt);
-        const yawCmd = this.pid.yaw.update(this.targets.yaw, this.physics.rotation.z, dt);
+        const rawSensors = this.physics.readSensors(this.sensorNoise);
+        const estimatedState = this.estimator.update(rawSensors.z, rawSensors.roll, rawSensors.pitch, rawSensors.yaw);
+
+        const thrustCmd = this.pid.alt.update(this.targets.z, estimatedState.z, dt);
+        const rollCmd = this.pid.roll.update(this.targets.roll, estimatedState.roll, dt);
+        const pitchCmd = this.pid.pitch.update(this.targets.pitch, estimatedState.pitch, dt);
+        const yawCmd = this.pid.yaw.update(this.targets.yaw, estimatedState.yaw, dt);
         
         const motorForces = this.mixer.mix(thrustCmd / 4, rollCmd, pitchCmd, yawCmd);
 
         this.physics.applyMotorForces(motorForces[0], motorForces[1], motorForces[2], motorForces[3]);
-        this.physics.update(dt);
         
         this.drone.updateState(this.physics.position, this.physics.rotation);
         this.drone.animatePropellers(motorForces, dt);
@@ -117,7 +122,7 @@ class Simulator {
 
         this.telemetryTimer += dt;
         if (this.telemetryTimer > 0.05) {
-            this.telemetry.update(this.elapsedTime, this.physics.position.z, this.targets.z);
+            this.telemetry.update(this.elapsedTime, estimatedState.z, this.targets.z, rawSensors.z);
             this.telemetryTimer = 0;
         }
 

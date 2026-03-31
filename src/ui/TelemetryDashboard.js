@@ -11,21 +11,26 @@ export class TelemetryDashboard {
                 labels: [],
                 datasets: [
                     {
-                        label: 'Actual Z (m)',
+                        label: 'Estimated Z',
                         borderColor: '#42a5f5',
-                        backgroundColor: 'rgba(66, 165, 245, 0.1)',
                         data: [],
                         pointRadius: 0,
-                        borderWidth: 2,
-                        fill: true
+                        borderWidth: 2
                     },
                     {
-                        label: 'Target Z (m)',
+                        label: 'Target Z',
                         borderColor: '#ef5350',
                         data: [],
                         pointRadius: 0,
                         borderDash: [5, 5],
                         borderWidth: 2
+                    },
+                    {
+                        label: 'Raw Noisy Z',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        data: [],
+                        pointRadius: 0,
+                        borderWidth: 1
                     }
                 ]
             },
@@ -34,34 +39,31 @@ export class TelemetryDashboard {
                 maintainAspectRatio: false,
                 animation: false,
                 scales: {
-                    x: {
-                        display: false
-                    },
+                    x: { display: false },
                     y: { 
-                        min: 0, 
-                        max: 20,
+                        min: 0, max: 20,
                         grid: { color: '#333' },
                         ticks: { color: '#aaa' }
                     }
                 },
                 plugins: {
-                    legend: {
-                        labels: { color: '#eee' }
-                    }
+                    legend: { labels: { color: '#eee' } }
                 }
             }
         });
     }
 
-    update(time, actual, target) {
+    update(time, estimated, target, noisy) {
         this.chart.data.labels.push(time.toFixed(2));
-        this.chart.data.datasets[0].data.push(actual);
+        this.chart.data.datasets[0].data.push(estimated);
         this.chart.data.datasets[1].data.push(target);
+        this.chart.data.datasets[2].data.push(noisy);
 
         if (this.chart.data.labels.length > this.maxDataPoints) {
             this.chart.data.labels.shift();
             this.chart.data.datasets[0].data.shift();
             this.chart.data.datasets[1].data.shift();
+            this.chart.data.datasets[2].data.shift();
         }
 
         this.chart.update();
