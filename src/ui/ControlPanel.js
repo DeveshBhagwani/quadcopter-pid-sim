@@ -52,6 +52,20 @@ export class ControlPanel {
             },
             exportCpp: () => {
                 CppExporter.export(this.sim.pid);
+            },
+            addWaypoint: () => {
+                const x = (Math.random() - 0.5) * 20;
+                const y = (Math.random() - 0.5) * 20;
+                const z = Math.random() * 8 + 2;
+                this.sim.navigator.addWaypoint(x, y, z);
+                this.sim.waypointVis.update(this.sim.navigator.waypoints);
+            },
+            startMission: () => {
+                this.sim.navigator.start();
+            },
+            clearMission: () => {
+                this.sim.navigator.clear();
+                this.sim.waypointVis.update([]);
             }
         };
         
@@ -60,5 +74,10 @@ export class ControlPanel {
         const toolsFolder = this.gui.addFolder('Engineering Tools');
         toolsFolder.add(actions, 'autoTuneZ').name('Auto-Tune Alt (Z-N)');
         toolsFolder.add(actions, 'exportCpp').name('Export C++ Header');
+
+        const navFolder = this.gui.addFolder('Autonomous Navigation');
+        navFolder.add(actions, 'addWaypoint').name('Add Random Waypoint');
+        navFolder.add(actions, 'startMission').name('Start Mission');
+        navFolder.add(actions, 'clearMission').name('Clear Mission');
     }
 }

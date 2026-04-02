@@ -10,6 +10,8 @@ import { TelemetryDashboard } from './ui/TelemetryDashboard.js';
 import { GhostDrone } from './visuals/GhostDrone.js';
 import { ThrustVectors } from './visuals/ThrustVectors.js';
 import { AutoTuner } from './utils/AutoTuner.js';
+import { Navigator } from './core/Navigator.js';
+import { WaypointVisualizer } from './visuals/WaypointVisualizer.js';
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
 
@@ -48,6 +50,9 @@ class Simulator {
 
         this.mixer = new Mixer(0, 10);
         this.thrustVectors = new ThrustVectors(this.drone.mesh, this.mixer.maxThrust);
+
+        this.navigator = new Navigator();
+        this.waypointVis = new WaypointVisualizer(this.scene);
 
         this.targets = { z: 5.0, roll: 0, pitch: 0, yaw: 0 };
         
@@ -104,6 +109,13 @@ class Simulator {
 
         const rawSensors = this.physics.readSensors(this.sensorNoise);
         const estimatedState = this.estimator.update(rawSensors.z, rawSensors.roll, rawSensors.pitch, rawSensors.yaw);
+
+        const navCmd = this.navigator.update(this.physics.position, estimatedState?.yaw || this.physics.rotation.z);
+        if (navCmd) {
+            this.targets.z = navCmd.z;
+            this.targets.roll = navCmd.roll;
+            this.targets.pitch = navCmd.pitch;
+        }
 
         const thrustCmd = this.pid.alt.update(this.targets.z, estimatedState.z, dt);
         const rollCmd = this.pid.roll.update(this.targets.roll, estimatedState.roll, dt);
