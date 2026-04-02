@@ -12,6 +12,7 @@ import { ThrustVectors } from './visuals/ThrustVectors.js';
 import { AutoTuner } from './utils/AutoTuner.js';
 import { Navigator } from './core/Navigator.js';
 import { WaypointVisualizer } from './visuals/WaypointVisualizer.js';
+import { TrailRenderer } from './visuals/TrailRenderer.js';
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
 
@@ -53,6 +54,9 @@ class Simulator {
 
         this.navigator = new Navigator();
         this.waypointVis = new WaypointVisualizer(this.scene);
+
+        this.trailRenderer = new TrailRenderer(this.scene);
+        this.cameraMode = 'Orbit';
 
         this.targets = { z: 5.0, roll: 0, pitch: 0, yaw: 0 };
         
@@ -131,6 +135,28 @@ class Simulator {
 
         this.ghostDrone.update(this.targets.z, this.targets.roll, this.targets.pitch, this.targets.yaw);
         this.thrustVectors.update(motorForces);
+
+        this.trailRenderer.update(this.physics.position);
+
+        // --- Camera Logic ---
+        if (this.cameraMode === 'FPV') {
+            this.controls.enabled = false;
+            
+            // Snap camera to drone chassis
+            this.camera.position.copy(this.drone.mesh.position);
+            this.camera.quaternion.copy(this.drone.mesh.quaternion);
+            
+            // Offset slightly forward (+X) and upward (+Z) in local space
+            this.camera.translateZ(-0.2); // Move "forward" in Three.js native camera space
+            this.camera.translateY(0.2);  // Move "up"
+            
+            // Reorient camera to look forward along the drone's heading
+            this.camera.rotateX(Math.PI / 2);
+            this.camera.rotateY(-Math.PI / 2);
+        } else {
+            this.controls.enabled = true;
+            this.controls.target.copy(this.physics.position);
+        }
 
         this.telemetryTimer += dt;
         if (this.telemetryTimer > 0.05) {
