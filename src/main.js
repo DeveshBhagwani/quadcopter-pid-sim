@@ -13,6 +13,8 @@ import { AutoTuner } from './utils/AutoTuner.js';
 import { Navigator } from './core/Navigator.js';
 import { WaypointVisualizer } from './visuals/WaypointVisualizer.js';
 import { TrailRenderer } from './visuals/TrailRenderer.js';
+import { ObstacleCourse } from './components/ObstacleCourse.js';
+import { Lidar } from './core/Lidar.js';
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
 
@@ -54,7 +56,8 @@ class Simulator {
 
         this.navigator = new Navigator();
         this.waypointVis = new WaypointVisualizer(this.scene);
-
+        this.obstacles = new ObstacleCourse(this.scene);
+        this.lidar = new Lidar(this.scene, this.drone.mesh, this.obstacles.group);
         this.trailRenderer = new TrailRenderer(this.scene);
         this.cameraMode = 'Orbit';
 
@@ -114,7 +117,18 @@ class Simulator {
         const rawSensors = this.physics.readSensors(this.sensorNoise);
         const estimatedState = this.estimator.update(rawSensors.z, rawSensors.roll, rawSensors.pitch, rawSensors.yaw);
 
-        const navCmd = this.navigator.update(this.physics.position, estimatedState?.yaw || this.physics.rotation.z);
+        const currentYaw = estimatedState?.yaw || this.physics.rotation.z;
+        const collisionDanger = this.lidar.update(currentYaw);
+        
+        if (collisionDanger && this.navigator.active) {
+            console.warn("LiDAR: Collision Imminent! Emergency Hover Initiated.");
+            this.navigator.clear();
+            this.waypointVis.update([]);
+            this.targets.roll = 0;
+            this.targets.pitch = 0;
+        }
+
+        const navCmd = this.navigator.update(this.physics.position, currentYaw);
         if (navCmd) {
             this.targets.z = navCmd.z;
             this.targets.roll = navCmd.roll;
@@ -138,22 +152,19 @@ class Simulator {
 
         this.trailRenderer.update(this.physics.position);
 
-        // --- Camera Logic ---
         if (this.cameraMode === 'FPV') {
             this.controls.enabled = false;
             
-            // Snap camera to drone chassis
             this.camera.position.copy(this.drone.mesh.position);
             this.camera.quaternion.copy(this.drone.mesh.quaternion);
             
-            // Offset slightly forward (+X) and upward (+Z) in local space
-            this.camera.translateZ(-0.2); // Move "forward" in Three.js native camera space
-            this.camera.translateY(0.2);  // Move "up"
+            this.camera.translateZ(-0.2); 
+            this.camera.translateY(0.2);  
             
-            // Reorient camera to look forward along the drone's heading
             this.camera.rotateX(Math.PI / 2);
             this.camera.rotateY(-Math.PI / 2);
-        } else {
+        } 
+        else {
             this.controls.enabled = true;
             this.controls.target.copy(this.physics.position);
         }

@@ -71,7 +71,6 @@ export class ControlPanel {
                 this.sim.cameraMode = this.sim.cameraMode === 'Orbit' ? 'FPV' : 'Orbit';
                 
                 if (this.sim.cameraMode === 'Orbit') {
-                    // Reset camera slightly back when returning to orbit
                     this.sim.camera.position.set(
                         this.sim.physics.position.x + 5, 
                         this.sim.physics.position.y - 5, 
@@ -79,6 +78,9 @@ export class ControlPanel {
                     );
                     this.sim.camera.up.set(0, 0, 1);
                 }
+            },
+            spawnObstacles: () => {
+                this.sim.obstacles.spawn();
             }
         };
         
@@ -92,6 +94,8 @@ export class ControlPanel {
         navFolder.add(actions, 'addWaypoint').name('Add Random Waypoint');
         navFolder.add(actions, 'startMission').name('Start Mission');
         navFolder.add(actions, 'clearMission').name('Clear Mission');
+        navFolder.add(actions, 'spawnObstacles').name('Spawn Obstacles');
+        navFolder.add(this.sim.lidar, 'enabled').name('Enable LiDAR Assist');
 
         const visualsFolder = this.gui.addFolder('Visuals & Camera');
         visualsFolder.add(actions, 'toggleCamera').name('Toggle FPV / Orbit');
