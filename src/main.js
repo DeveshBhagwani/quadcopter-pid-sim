@@ -4,6 +4,7 @@ import { PhysicsEngine } from './core/PhysicsEngine.js';
 import { StateEstimator } from './core/StateEstimator.js';
 import { Drone } from './components/Drone.js';
 import { PIDController } from './core/PIDController.js';
+import { CascadePIDController } from './core/CascadePIDController.js';
 import { Mixer } from './core/Mixer.js';
 import { ControlPanel } from './ui/ControlPanel.js';
 import { TelemetryDashboard } from './ui/TelemetryDashboard.js';
@@ -64,10 +65,10 @@ class Simulator {
         this.targets = { z: 5.0, roll: 0, pitch: 0, yaw: 0 };
         
         this.pid = {
-            alt: new PIDController(15.0, 2.0, 10.0, 0, 30),
-            roll: new PIDController(2.0, 0.0, 1.5, -5, 5),
-            pitch: new PIDController(2.0, 0.0, 1.5, -5, 5),
-            yaw: new PIDController(4.0, 0.0, 2.0, -5, 5)
+            alt: new CascadePIDController(2.5, 0.0, 0.1, -10, 10,  15.0, 2.0, 10.0, 0, 30),
+            roll: new CascadePIDController(3.0, 0.0, 0.1, -2, 2,  2.0, 0.0, 1.5, -5, 5),
+            pitch: new CascadePIDController(3.0, 0.0, 0.1, -2, 2,  2.0, 0.0, 1.5, -5, 5),
+            yaw: new CascadePIDController(2.0, 0.0, 0.0, -1, 1,  4.0, 0.0, 2.0, -5, 5)
         };
 
         this.autoTuner = new AutoTuner(this);
@@ -115,7 +116,7 @@ class Simulator {
         this.physics.update(dt);
 
         const rawSensors = this.physics.readSensors(this.sensorNoise);
-        const estimatedState = this.estimator.update(rawSensors.z, rawSensors.roll, rawSensors.pitch, rawSensors.yaw);
+        const estimatedState = this.estimator.update(dt, rawSensors.z, rawSensors.vz, rawSensors.roll, rawSensors.pitch, rawSensors.yaw, rawSensors.p, rawSensors.q, rawSensors.r);
 
         const currentYaw = estimatedState?.yaw || this.physics.rotation.z;
         const collisionDanger = this.lidar.update(currentYaw);
@@ -135,10 +136,10 @@ class Simulator {
             this.targets.pitch = navCmd.pitch;
         }
 
-        const thrustCmd = this.pid.alt.update(this.targets.z, estimatedState.z, dt);
-        const rollCmd = this.pid.roll.update(this.targets.roll, estimatedState.roll, dt);
-        const pitchCmd = this.pid.pitch.update(this.targets.pitch, estimatedState.pitch, dt);
-        const yawCmd = this.pid.yaw.update(this.targets.yaw, estimatedState.yaw, dt);
+        const thrustCmd = this.pid.alt.update(this.targets.z, estimatedState.z, estimatedState.vz, dt);
+        const rollCmd = this.pid.roll.update(this.targets.roll, estimatedState.roll, estimatedState.p, dt);
+        const pitchCmd = this.pid.pitch.update(this.targets.pitch, estimatedState.pitch, estimatedState.q, dt);
+        const yawCmd = this.pid.yaw.update(this.targets.yaw, estimatedState.yaw, estimatedState.r, dt);
         
         const motorForces = this.mixer.mix(thrustCmd / 4, rollCmd, pitchCmd, yawCmd);
 
