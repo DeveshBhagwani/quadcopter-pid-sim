@@ -26,9 +26,13 @@ export class PhysicsEngine {
     readSensors(noiseLevel) {
         return {
             z: this.position.z + this.gaussianNoise(noiseLevel),
+            vz: this.velocity.z + this.gaussianNoise(noiseLevel * 0.5),
             roll: this.rotation.x + this.gaussianNoise(noiseLevel * 0.1),
             pitch: this.rotation.y + this.gaussianNoise(noiseLevel * 0.1),
-            yaw: this.rotation.z + this.gaussianNoise(noiseLevel * 0.1)
+            yaw: this.rotation.z + this.gaussianNoise(noiseLevel * 0.1),
+            p: this.angularVelocity.x + this.gaussianNoise(noiseLevel * 0.5),
+            q: this.angularVelocity.y + this.gaussianNoise(noiseLevel * 0.5),
+            r: this.angularVelocity.z + this.gaussianNoise(noiseLevel * 0.5)
         };
     }
 
