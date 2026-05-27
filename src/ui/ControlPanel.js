@@ -9,23 +9,27 @@ export class ControlPanel {
     }
 
     build() {
-        const altFolder = this.gui.addFolder('Altitude PID (Z)');
-        altFolder.add(this.sim.pid.alt, 'kp', 0, 50, 0.1).name('Kp').listen();
-        altFolder.add(this.sim.pid.alt, 'ki', 0, 50, 0.1).name('Ki').listen();
-        altFolder.add(this.sim.pid.alt, 'kd', 0, 50, 0.1).name('Kd').listen();
+        const altFolder = this.gui.addFolder('Altitude Cascade PID (Z)');
+        altFolder.add(this.sim.pid.alt.outerPID, 'kp', 0, 50, 0.1).name('Outer Kp (Vel)').listen();
+        altFolder.add(this.sim.pid.alt.innerPID, 'kp', 0, 50, 0.1).name('Inner Kp').listen();
+        altFolder.add(this.sim.pid.alt.innerPID, 'ki', 0, 50, 0.1).name('Inner Ki').listen();
+        altFolder.add(this.sim.pid.alt.innerPID, 'kd', 0, 50, 0.1).name('Inner Kd').listen();
         
-        const attFolder = this.gui.addFolder('Attitude PID (Roll/Pitch)');
-        attFolder.add(this.sim.pid.roll, 'kp', 0, 10, 0.01).name('Kp (R/P)');
-        attFolder.add(this.sim.pid.roll, 'ki', 0, 5, 0.01).name('Ki (R/P)');
-        attFolder.add(this.sim.pid.roll, 'kd', 0, 10, 0.01).name('Kd (R/P)').onChange(v => {
-            this.sim.pid.pitch.kp = this.sim.pid.roll.kp;
-            this.sim.pid.pitch.ki = this.sim.pid.roll.ki;
-            this.sim.pid.pitch.kd = v;
+        const attFolder = this.gui.addFolder('Attitude Cascade PID (Roll/Pitch)');
+        attFolder.add(this.sim.pid.roll.outerPID, 'kp', 0, 10, 0.01).name('Outer Kp (Angle)');
+        attFolder.add(this.sim.pid.roll.innerPID, 'kp', 0, 10, 0.01).name('Inner Kp (Rate)');
+        attFolder.add(this.sim.pid.roll.innerPID, 'ki', 0, 5, 0.01).name('Inner Ki');
+        attFolder.add(this.sim.pid.roll.innerPID, 'kd', 0, 10, 0.01).name('Inner Kd').onChange(v => {
+            this.sim.pid.pitch.outerPID.kp = this.sim.pid.roll.outerPID.kp;
+            this.sim.pid.pitch.innerPID.kp = this.sim.pid.roll.innerPID.kp;
+            this.sim.pid.pitch.innerPID.ki = this.sim.pid.roll.innerPID.ki;
+            this.sim.pid.pitch.innerPID.kd = v;
         });
 
-        const yawFolder = this.gui.addFolder('Yaw PID');
-        yawFolder.add(this.sim.pid.yaw, 'kp', 0, 20, 0.1).name('Kp');
-        yawFolder.add(this.sim.pid.yaw, 'kd', 0, 20, 0.1).name('Kd');
+        const yawFolder = this.gui.addFolder('Yaw Cascade PID');
+        yawFolder.add(this.sim.pid.yaw.outerPID, 'kp', 0, 20, 0.1).name('Outer Kp');
+        yawFolder.add(this.sim.pid.yaw.innerPID, 'kp', 0, 20, 0.1).name('Inner Kp');
+        yawFolder.add(this.sim.pid.yaw.innerPID, 'kd', 0, 20, 0.1).name('Inner Kd');
 
         const flightFolder = this.gui.addFolder('Flight Targets');
         flightFolder.add(this.sim.targets, 'z', 0, 15, 0.5).name('Target Z (m)').listen();
