@@ -101,6 +101,11 @@ export class ControlPanel {
         navFolder.add(actions, 'spawnObstacles').name('Spawn Obstacles');
         navFolder.add(this.sim.lidar, 'enabled').name('Enable LiDAR Assist');
 
+        const hwFolder = this.gui.addFolder('Hardware-in-the-Loop');
+        hwFolder.add({ connect: () => this.sim.serialBridge.connect() }, 'connect').name('Connect Serial RC');
+        hwFolder.add({ disconnect: () => this.sim.serialBridge.disconnect() }, 'disconnect').name('Disconnect Serial');
+        hwFolder.add(this.sim.serialBridge.rcData, 'active').name('Enable RC Override').listen();
+
         const visualsFolder = this.gui.addFolder('Visuals & Camera');
         visualsFolder.add(actions, 'toggleCamera').name('Toggle FPV / Orbit');
     }

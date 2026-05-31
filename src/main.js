@@ -17,6 +17,7 @@ import { TrailRenderer } from './visuals/TrailRenderer.js';
 import { ObstacleCourse } from './components/ObstacleCourse.js';
 import { Lidar } from './core/Lidar.js';
 import { SlamMap } from './ui/SlamMap.js';
+import { SerialBridge } from './core/SerialBridge.js';
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
 
@@ -61,6 +62,7 @@ class Simulator {
         this.waypointVis = new WaypointVisualizer(this.scene);
         this.obstacles = new ObstacleCourse(this.scene);
         this.lidar = new Lidar(this.scene, this.drone.mesh, this.obstacles.group);
+        this.serialBridge = new SerialBridge();
         this.trailRenderer = new TrailRenderer(this.scene);
         this.cameraMode = 'Orbit';
 
@@ -139,6 +141,20 @@ class Simulator {
             this.targets.z = navCmd.z;
             this.targets.roll = navCmd.roll;
             this.targets.pitch = navCmd.pitch;
+        }
+
+        // Hardware-in-the-Loop Override
+        if (this.serialBridge.rcData.active) {
+            this.targets.z = this.serialBridge.rcData.z;
+            this.targets.roll = this.serialBridge.rcData.roll;
+            this.targets.pitch = this.serialBridge.rcData.pitch;
+            this.targets.yaw = this.serialBridge.rcData.yaw;
+            
+            // Disable autonomous navigation when under manual RC control
+            if (this.navigator.active) {
+                this.navigator.clear();
+                this.waypointVis.update([]);
+            }
         }
 
         const thrustCmd = this.pid.alt.update(this.targets.z, estimatedState.z, estimatedState.vz, dt);
