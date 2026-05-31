@@ -61,7 +61,7 @@ export class ControlPanel {
                 const x = (Math.random() - 0.5) * 20;
                 const y = (Math.random() - 0.5) * 20;
                 const z = Math.random() * 8 + 2;
-                this.sim.navigator.addWaypoint(x, y, z);
+                this.sim.navigator.addWaypoint(x, y, z, this.sim.physics.position);
                 this.sim.waypointVis.update(this.sim.navigator.waypoints);
             },
             startMission: () => {

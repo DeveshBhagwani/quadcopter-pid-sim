@@ -1,20 +1,40 @@
+import { AStarPlanner } from '../utils/AStarPlanner.js';
+
 export class Navigator {
-    constructor() {
+    constructor(slamMap) {
+        this.slamMap = slamMap;
+        this.planner = new AStarPlanner();
         this.waypoints = [];
         this.active = false;
         this.currentIndex = 0;
         this.kpPos = 0.15; // Gain translating distance error to tilt angle
         this.maxAngle = 0.5; // Cap tilt to ~30 degrees to prevent flipping
+        this.finalTarget = null;
     }
 
-    addWaypoint(x, y, z) {
-        this.waypoints.push({ x, y, z });
+    addWaypoint(x, y, z, currentPos) {
+        if (!currentPos) {
+            console.warn("Navigator.addWaypoint requires currentPos for A* planning");
+            return;
+        }
+        
+        const path = this.planner.plan(currentPos, { x, y, z }, this.slamMap);
+        
+        if (path.length > 0) {
+            this.waypoints = path;
+            this.currentIndex = 0;
+            this.finalTarget = { x, y, z };
+        } else {
+            console.warn("A*: No safe path found to target!");
+            // Fallback to straight line (risky) or just abort. We'll abort.
+        }
     }
 
     clear() {
         this.waypoints = [];
         this.active = false;
         this.currentIndex = 0;
+        this.finalTarget = null;
     }
 
     start() {
@@ -25,6 +45,16 @@ export class Navigator {
         if (!this.active || this.currentIndex >= this.waypoints.length) return null;
 
         const target = this.waypoints[this.currentIndex];
+        
+        // Dynamically check if our immediate next waypoint just became blocked by new LiDAR data
+        if (this.slamMap && this.planner.isBlocked(Math.round(target.x / this.planner.res), Math.round(target.y / this.planner.res), this.slamMap)) {
+            console.warn("A*: Path suddenly blocked! Re-planning...");
+            if (this.finalTarget) {
+                this.addWaypoint(this.finalTarget.x, this.finalTarget.y, this.finalTarget.z, currentPos);
+            }
+            return { z: currentPos.z, roll: 0, pitch: 0 }; // Hover while replanning
+        }
+
         const dx = target.x - currentPos.x;
         const dy = target.y - currentPos.y;
         

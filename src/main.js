@@ -56,11 +56,11 @@ class Simulator {
         this.mixer = new Mixer(0, 10);
         this.thrustVectors = new ThrustVectors(this.drone.mesh, this.mixer.maxThrust);
 
-        this.navigator = new Navigator();
+        this.slamMap = new SlamMap();
+        this.navigator = new Navigator(this.slamMap);
         this.waypointVis = new WaypointVisualizer(this.scene);
         this.obstacles = new ObstacleCourse(this.scene);
         this.lidar = new Lidar(this.scene, this.drone.mesh, this.obstacles.group);
-        this.slamMap = new SlamMap();
         this.trailRenderer = new TrailRenderer(this.scene);
         this.cameraMode = 'Orbit';
 

@@ -13,6 +13,10 @@ export class SlamMap {
         // Simple point cloud
         this.pointCloud = [];
         this.maxPoints = 3000;
+        
+        // Occupancy Grid (Spatial Hash)
+        this.gridResolution = 0.5; // 0.5m cells
+        this.occupancyGrid = new Set();
     }
 
     update(dronePos, droneYaw, lidarHits) {
@@ -34,7 +38,23 @@ export class SlamMap {
             this.pointCloud.splice(0, this.pointCloud.length - this.maxPoints);
         }
 
+        // Rebuild occupancy grid for A* lookups
+        this.occupancyGrid.clear();
+        this.pointCloud.forEach(p => {
+            const gx = Math.round(p.x / this.gridResolution);
+            const gy = Math.round(p.y / this.gridResolution);
+            this.occupancyGrid.add(`${gx},${gy}`);
+        });
+
         this.draw(dronePos, droneYaw);
+    }
+
+    isObstacle(x, y) {
+        const gx = Math.round(x / this.gridResolution);
+        const gy = Math.round(y / this.gridResolution);
+        // Add a small safety margin by also checking adjacent cells?
+        // Let's stick to strict cell checking for now.
+        return this.occupancyGrid.has(`${gx},${gy}`);
     }
 
     draw(dronePos, droneYaw) {
