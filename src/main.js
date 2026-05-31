@@ -16,6 +16,7 @@ import { WaypointVisualizer } from './visuals/WaypointVisualizer.js';
 import { TrailRenderer } from './visuals/TrailRenderer.js';
 import { ObstacleCourse } from './components/ObstacleCourse.js';
 import { Lidar } from './core/Lidar.js';
+import { SlamMap } from './ui/SlamMap.js';
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
 
@@ -59,6 +60,7 @@ class Simulator {
         this.waypointVis = new WaypointVisualizer(this.scene);
         this.obstacles = new ObstacleCourse(this.scene);
         this.lidar = new Lidar(this.scene, this.drone.mesh, this.obstacles.group);
+        this.slamMap = new SlamMap();
         this.trailRenderer = new TrailRenderer(this.scene);
         this.cameraMode = 'Orbit';
 
@@ -119,7 +121,10 @@ class Simulator {
         const estimatedState = this.estimator.update(dt, rawSensors.z, rawSensors.vz, rawSensors.roll, rawSensors.pitch, rawSensors.yaw, rawSensors.p, rawSensors.q, rawSensors.r);
 
         const currentYaw = estimatedState?.yaw || this.physics.rotation.z;
-        const collisionDanger = this.lidar.update(currentYaw);
+        const lidarData = this.lidar.update(currentYaw);
+        const collisionDanger = lidarData.collisionImminent;
+        
+        this.slamMap.update(this.physics.position, currentYaw, lidarData.hits);
         
         if (collisionDanger && this.navigator.active) {
             console.warn("LiDAR: Collision Imminent! Emergency Hover Initiated.");

@@ -32,3 +32,23 @@ canvas {
   width: 100% !important;
   height: 100% !important;
 }
+
+#slam-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 250px;
+  height: 250px;
+  background-color: rgba(26, 26, 26, 0.85);
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+#slam-map {
+  width: 100% !important;
+  height: 100% !important;
+  background-color: black;
+  border-radius: 4px;
+}

@@ -21,13 +21,14 @@ export class Lidar {
     update(yaw) {
         if (!this.enabled) {
             this.arrows.forEach(a => a.setLength(0)); // Hide lasers if disabled
-            return false;
+            return { collisionImminent: false, hits: [] };
         }
 
         const pos = this.droneMesh.position;
         // Angles: Straight ahead, +30 degrees Left, -30 degrees Right
         const angles = [yaw, yaw + 0.52, yaw - 0.52]; 
         let collisionImminent = false;
+        const hits = [];
 
         angles.forEach((angle, index) => {
             // Convert yaw angle to a 3D direction vector
@@ -40,6 +41,8 @@ export class Lidar {
                 // Obstacle detected within 6 meters
                 this.arrows[index].setLength(intersects[0].distance, 0.2, 0.2);
                 this.arrows[index].setColor(0xff0000); // Turn red
+                
+                hits.push({ distance: intersects[0].distance, angle: angle });
                 
                 if (intersects[0].distance < 1.5) {
                     collisionImminent = true; // khatraa
@@ -55,6 +58,6 @@ export class Lidar {
             this.arrows[index].setDirection(dir);
         });
 
-        return collisionImminent;
+        return { collisionImminent, hits };
     }
 }
