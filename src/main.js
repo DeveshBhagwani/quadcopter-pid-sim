@@ -18,6 +18,8 @@ import { ObstacleCourse } from './components/ObstacleCourse.js';
 import { Lidar } from './core/Lidar.js';
 import { SlamMap } from './ui/SlamMap.js';
 import { SerialBridge } from './core/SerialBridge.js';
+import { RingCourse } from './components/RingCourse.js';
+import { GameManager } from './core/GameManager.js';
 
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
 
@@ -61,6 +63,9 @@ class Simulator {
         this.navigator = new Navigator(this.slamMap);
         this.waypointVis = new WaypointVisualizer(this.scene);
         this.obstacles = new ObstacleCourse(this.scene);
+        this.ringCourse = new RingCourse(this.scene);
+        this.gameManager = new GameManager(this.ringCourse);
+        
         this.lidar = new Lidar(this.scene, this.drone.mesh, this.obstacles.group);
         this.serialBridge = new SerialBridge();
         this.trailRenderer = new TrailRenderer(this.scene);
@@ -173,6 +178,7 @@ class Simulator {
         this.thrustVectors.update(motorForces);
 
         this.trailRenderer.update(this.physics.position);
+        this.gameManager.update(this.physics.position);
 
         if (this.cameraMode === 'FPV') {
             this.controls.enabled = false;

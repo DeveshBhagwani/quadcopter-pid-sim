@@ -52,3 +52,70 @@ canvas {
   background-color: black;
   border-radius: 4px;
 }
+
+#hud-container {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  color: #0f0;
+  text-shadow: 0 0 10px #0f0;
+  pointer-events: none;
+}
+
+#race-timer {
+  font-size: 48px;
+  font-weight: bold;
+}
+
+#ring-counter {
+  font-size: 24px;
+  margin-top: 10px;
+}
+
+#leaderboard-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(20, 20, 20, 0.95);
+  border: 2px solid #0f0;
+  border-radius: 10px;
+  padding: 30px;
+  color: white;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+  text-align: center;
+  z-index: 1000;
+  min-width: 300px;
+}
+
+#leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+  font-size: 20px;
+}
+
+#leaderboard-list li {
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #333;
+  padding-bottom: 5px;
+}
+
+#close-leaderboard {
+  background-color: #0f0;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+#close-leaderboard:hover {
+  background-color: #0c0;
+}

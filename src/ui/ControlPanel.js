@@ -106,6 +106,10 @@ export class ControlPanel {
         hwFolder.add({ disconnect: () => this.sim.serialBridge.disconnect() }, 'disconnect').name('Disconnect Serial');
         hwFolder.add(this.sim.serialBridge.rcData, 'active').name('Enable RC Override').listen();
 
+        const gameFolder = this.gui.addFolder('Gamification');
+        gameFolder.add({ start: () => this.sim.gameManager.startRace() }, 'start').name('Start Time Trial');
+        gameFolder.add({ stop: () => this.sim.gameManager.stopRace() }, 'stop').name('Stop Time Trial');
+
         const visualsFolder = this.gui.addFolder('Visuals & Camera');
         visualsFolder.add(actions, 'toggleCamera').name('Toggle FPV / Orbit');
     }

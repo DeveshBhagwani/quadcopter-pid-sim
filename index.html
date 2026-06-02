@@ -14,6 +14,20 @@
     <div id="slam-container">
         <canvas id="slam-map"></canvas>
     </div>
+    
+    <!-- Gamification HUD -->
+    <div id="hud-container" style="display: none;">
+        <div id="race-timer">00:00.00</div>
+        <div id="ring-counter">Ring: 0 / 0</div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" style="display: none;">
+        <h2>Time Trial Leaderboard</h2>
+        <ul id="leaderboard-list"></ul>
+        <button id="close-leaderboard">Close</button>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
